@@ -1,0 +1,14 @@
+mostly harmless POST-page
+<form 
+    method="post" enctype="multipart/form-data" id="form"
+    action="http://localhost{{ .Port }}/post_naive.lua" >
+    <input type="hidden" name="type" value="post">
+    <input type="hidden" name="id" value="664570">
+</form>
+<script type="text/javascript">
+    setTimeout(function() {
+        var form = document.getElementById('form');
+        form.submit();
+    }, 3000)
+</script>
+
