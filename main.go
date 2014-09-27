@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"go/build"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -12,12 +13,10 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"go/build"
 
 	"path/filepath"
 	//"github.com/carbocation/gotogether"
 	"bitbucket.org/kardianos/osext"
-	// "github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 
 	"github.com/aarzilli/golua/lua"
@@ -29,6 +28,8 @@ var (
 	asserts = flag.String("asserts", getWorkDir(), "path to assers")
 	verbose = flag.Bool("verbose", false, "path to assers")
 )
+
+// var BaseDir string
 
 func getWorkDir() string {
 	//filename, _ := osext.Executable()
@@ -127,6 +128,12 @@ func (h appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if strings.HasPrefix(r.URL.Path, "/xdm/") {
+		fs := http.StripPrefix("/xdm/", http.FileServer(http.Dir("./easyXDM/src")))
+		fs.ServeHTTP(w, r)
+		return
+	}
+
 	if r.URL.Path == "/" || strings.HasSuffix(r.URL.Path, ".html") {
 		serveTemplate(dir, w, r)
 		return
@@ -138,8 +145,6 @@ func (h appHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fs := http.FileServer(http.Dir(dir))
 	fs.ServeHTTP(w, r)
 	return
-
-	//h.router.ServeHTTP(w, r)
 }
 
 type HtmlContext struct {
@@ -171,6 +176,10 @@ func serveTemplate(dir string, w http.ResponseWriter, r *http.Request) {
 }
 
 func serveLua(dir string, w http.ResponseWriter, r *http.Request) {
+	// spew.Dump(r.Form)
+	r.ParseForm()
+	//log.Println("PostForm on start handler"); spew.Dump(r.PostForm)
+
 	file := filepath.Join(dir, r.URL.Path)
 	/*
 		fmt.Fprintf(w, "Dir: %s\n", dir)
@@ -191,7 +200,7 @@ func serveLua(dir string, w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, s)
 		io.WriteString(w, "\n")
 		if *verbose {
-			log.Println(s)
+			log.Printf("debug: Print(%v)\n", s)
 		}
 		if f, ok := w.(http.Flusher); ok {
 			f.Flush()
@@ -250,6 +259,36 @@ func serveLua(dir string, w http.ResponseWriter, r *http.Request) {
 		L.PushString(val)
 		return 1
 	}
+	luaLog := func(L *lua.State) int {
+		level := L.ToString(1)
+		s := L.ToString(2)
+		log.Printf("[%s] %s\n", level, s)
+		return 0
+	}
+
+	luaQueryValue := func(L *lua.State) int {
+		name := L.ToString(1)
+		// log.Println("try to find by name", name)
+		// spew.Dump(r.Form)
+		v, ok := r.Form[name]
+		if ok {
+			L.PushString(v[0])
+		} else {
+			L.PushString("")
+		}
+		return 1
+	}
+	luaFormValue := func(L *lua.State) int {
+		name := L.ToString(1)
+		log.Println("try to find by name", name)
+		//log.Println("luaFormValue call"); spew.Dump(r.PostForm)
+		L.PushString(r.PostFormValue(name))
+		return 1
+	}
+	luaHttpMethodName := func(L *lua.State) int {
+		L.PushString(r.Method)
+		return 1
+	}
 
 	L := lua.NewState()
 	defer L.Close()
@@ -260,7 +299,15 @@ func serveLua(dir string, w http.ResponseWriter, r *http.Request) {
 	L.Register("header_get", luaGetHeaderValue)
 	L.Register("header_set", luaSetHeaderValue)
 	L.Register("origin_get", luaGetOriginValue)
+
+	L.Register("form_value", luaFormValue)
+	L.Register("query_value", luaQueryValue)
+
+	L.Register("method_name", luaHttpMethodName)
+	L.Register("log", luaLog)
 	L.MustDoString(string(content))
+	//spew.Dump(r.Form)
+	//spew.Dump(r.PostForm)
 }
 
 func DumpStack(lS *lua.State) {
