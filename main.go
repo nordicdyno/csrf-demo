@@ -20,7 +20,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/aarzilli/golua/lua"
-	"github.com/davecgh/go-spew/spew"
+	// "github.com/davecgh/go-spew/spew"
 )
 
 var (
@@ -193,7 +193,9 @@ func serveLua(dir string, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	log.Println("For file", file, "Host is: ", r.Host)
+	if *verbose {
+		log.Println("For file", file, "Host is:", r.Host)
+	}
 
 	luaPrint := func(L *lua.State) int {
 		s := L.ToString(1)
@@ -209,13 +211,13 @@ func serveLua(dir string, w http.ResponseWriter, r *http.Request) {
 	}
 	luaGetHeaderValue := func(L *lua.State) int {
 		s := L.ToString(1)
-		log.Println("Get header", s)
+		//log.Println("Get header", s)
 		var val string
 		if s == "Host" {
 			val = r.Host
 		} else {
 			val = r.Header.Get(s)
-			log.Println("got header value", val)
+			//log.Println("got header value", val)
 		}
 		L.PushString(val)
 		return 1
@@ -229,13 +231,13 @@ func serveLua(dir string, w http.ResponseWriter, r *http.Request) {
 
 	luaGetCookieValue := func(L *lua.State) int {
 		s := L.ToString(1)
-		log.Println("Get ", s)
+		//log.Println("Get ", s)
 		c, err := r.Cookie(s)
 		if err != nil {
 			L.PushString("")
 			return 0
 		}
-		log.Println("got value", c.Value)
+		//log.Println("got value", c.Value)
 		L.PushString(c.Value)
 		return 1
 	}
@@ -252,8 +254,10 @@ func serveLua(dir string, w http.ResponseWriter, r *http.Request) {
 		return 0
 	}
 	luaGetOriginValue := func(L *lua.State) int {
-		log.Println("Get origin", r.Proto)
-		spew.Dump(strings.SplitN(r.Proto, "/", 2))
+		if *verbose {
+			log.Println("Get origin", r.Proto)
+		}
+		//spew.Dump(strings.SplitN(r.Proto, "/", 2))
 		//val := r.RemoteAddr
 		val := strings.ToLower(strings.SplitN(r.Proto, "/", 2)[0]) + "://" + r.Host
 		L.PushString(val)
@@ -262,7 +266,9 @@ func serveLua(dir string, w http.ResponseWriter, r *http.Request) {
 	luaLog := func(L *lua.State) int {
 		level := L.ToString(1)
 		s := L.ToString(2)
-		log.Printf("[%s] %s\n", level, s)
+		if *verbose {
+			log.Printf("[%s] %s\n", level, s)
+		}
 		return 0
 	}
 
@@ -280,8 +286,6 @@ func serveLua(dir string, w http.ResponseWriter, r *http.Request) {
 	}
 	luaFormValue := func(L *lua.State) int {
 		name := L.ToString(1)
-		log.Println("try to find by name", name)
-		//log.Println("luaFormValue call"); spew.Dump(r.PostForm)
 		L.PushString(r.PostFormValue(name))
 		return 1
 	}
