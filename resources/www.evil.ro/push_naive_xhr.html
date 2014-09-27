@@ -1,0 +1,90 @@
+evil POST-page
+<br>
+<p id="info"></p>
+<p id="error"></p>
+<script type="text/javascript">
+    setTimeout(function() {
+        function createCORSRequest(method, url) {
+          var xhr = new XMLHttpRequest();
+          if ("withCredentials" in xhr) {
+            // Check if the XMLHttpRequest object has a "withCredentials" property.
+            // "withCredentials" only exists on XMLHTTPRequest2 objects.
+            xhr.open(method, url, true);
+          } else if (typeof XDomainRequest != "undefined") {
+            // Otherwise, check if XDomainRequest.
+            // XDomainRequest only exists in IE, and is IE's way of making CORS requests.
+            xhr = new XDomainRequest();
+            xhr.open(method, url);
+          } else {
+            // Otherwise, CORS is not supported by the browser.
+            xhr = null;
+          }
+          //xhr.withCredentials = true;
+          return xhr;
+        }
+
+        //var xhr = createCORSRequest('POST', "http://localhost{{ .Port }}/post_naive.lua");
+        var xhr = createRequest('POST', "http://localhost{{ .Port }}/post_naive.lua");
+        xhr.onreadystatechange=function(){ postCallback(xhr) };
+        if (!xhr) {
+          throw new Error('CORS not supported');
+        }
+        xhr.onload = function() {
+            var responseText = xhr.responseText;
+            document.getElementById("info").innerHTML = "Response: " + responseText;
+        };
+
+        xhr.onerror = function(e) {
+            var error = e.error
+            if (e.error === undefined) {
+                error = "Possibly CORS error (because JS can't catch them)";
+            }
+            document.getElementById("error").innerHTML = "Error: " + error;
+        };
+        //xhr.setRequestHeader('Origin', 'XYZ');
+        // In order for this to work, the server must also enable credentials by setting the Access-Control-Allow-Credentials response header to “true”. 
+        //xhr.withCredentials = true;
+        try {
+            xhr.send();
+        } catch (e) {
+// https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest
+// works only for sync case
+            document.getElementById("info").innerHTML = "exception name=" + e.name + "; message=" + e.message;
+            return;
+        }
+        document.getElementById("info").innerHTML = "no exception";
+    }, 1000)
+
+    function postCallback(xmlhttp) {
+        if (xmlhttp.readyState==4 && xmlhttp.status==200){
+            document.getElementById("error").innerHTML= "ok: " + xmlhttp.responseText;
+        }
+        else {
+            // report error with fetch
+            document.getElementById("error").innerHTML= "error: " + xmlhttp.responseText;
+        }
+    }
+
+    function createRequest(method, url) {
+        var xmlhttp = getXmlHttp();
+        xmlhttp.open(method, url, true);
+        //xmlhttp.open(method, url, false);
+        return xmlhttp;
+    }
+    function getXmlHttp(){
+        var xmlhttp;
+        try {
+            xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+        } catch (e) {
+            try {
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            } catch (E) {
+                xmlhttp = false;
+            }
+        }
+        if (!xmlhttp && typeof XMLHttpRequest!='undefined') {
+            xmlhttp = new XMLHttpRequest();
+        }
+        return xmlhttp;
+    }
+</script>

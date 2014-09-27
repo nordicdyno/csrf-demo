@@ -1,0 +1,40 @@
+<html>
+<head>
+<script type="text/javascript" src="/xdm/easyXDM.debug.js"></script>
+</head>
+<body>
+    <h3> XDM demo </h3>
+<p id="status"></p>
+<p id="data"></p>
+<script>
+    // var REMOTE = location.host;
+    //remote =  "http://localhost{{ .Port }}/xdm/cors/index.html",
+    // document.getElementById("status").innerHTML = "Remote: " + REMOTE;
+var xhr = new easyXDM.Socket({
+    remote: "http://localhost{{ .Port }}/xdm/cors/index.html",
+/*
+    onMessage: function(message, origin){
+        alert("Received '" + message + "' from '" + origin + "'");
+        socket.postMessage("Indeed it does!");
+    }
+*/
+},
+{ remote: { request: {} } }
+);
+
+xhr.request(
+    {
+        url: "http://localhost{{ .Port }}/post_naive.lua",
+        method: "POST",
+        data: {foo:"bar"}
+    }, function(response) { // функция обработки результата ответа
+        document.getElementById("status", "Status: " + response.status);
+        document.getElementById("data",   "Data: "   + response.data);
+        // alert(response.status);
+        // alert(response.data);
+    }
+); /* */
+</script>
+
+</body>
+</html>

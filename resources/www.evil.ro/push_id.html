@@ -1,0 +1,13 @@
+evil POST-page
+<form 
+    method="post" enctype="multipart/form-data" id="form"
+    action="http://localhost{{ .Port }}/post_id.lua" >
+    <input type="hidden" name="type" value="post">
+</form>
+<script type="text/javascript">
+    setTimeout(function() {
+        var form = document.getElementById('form');
+        form.submit();
+    }, 1000)
+</script>
+

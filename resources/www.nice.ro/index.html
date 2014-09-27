@@ -1,18 +1,31 @@
 <html>
 <body>
     <h3>NICE.RO</h3>
-    <h4>Naive approach</h4>
+
+<table>
+<tr>
+    <td><h4>Naive approach</h4>
     <iframe src="http://www.evil.ro{{ .Port }}/push_naive.html" width="468" height="110">
-        Ваш браузер не поддерживает фреймы
-    </iframe><br>
-    </p>
-    <h4>Check header (evil)</h4>
+    </iframe></td>
+
+    <td><h4>Naive approach with XHR (Javascript)</h4>
+    <iframe src="http://www.evil.ro{{ .Port }}/push_naive_xhr.html" width="468" height="110">
+    </iframe></td>
+</tr>
+<tr>
+    <td><h4>Check header</h4>
     <iframe src="http://www.evil.ro{{ .Port }}/push_header.html" width="468" height="110">
-        Ваш браузер не поддерживает фреймы
-    </iframe><br>
-    <h4>Check header (target)</h4>
-    <iframe src="http://localhost{{ .Port }}/pushframe.html" width="468" height="110">
-        Ваш браузер не поддерживает фреймы
-    </iframe><br>
+    </iframe></td>
+    <td></td>
+</tr>
+<tr>
+    <td><h4>Check Id</h4>
+    <iframe src="http://www.evil.ro{{ .Port }}/push_id.html" width="468" height="150">
+    </iframe></td>
+    <td><h4>Check Id fooled by flash</h4>
+    <iframe src="http://www.evil.ro{{ .Port }}/push_id_flash.html" width="512" height="150">
+    </iframe></td>
+</tr>
+</table>
 </body>
 </html>
